@@ -37,7 +37,7 @@ check_result() {
 
 mkdir $TMP_DIR
 
-node tests/generators/run_generators_in_browser.js
+tests/scripts/run_browser_test.sh tests/generators/run_generators_in_browser.js
 generator_suffixes=( "js" "py" "dart" "lua" "php" )
 for i in "${generator_suffixes[@]}"
 do

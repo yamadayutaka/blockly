@@ -69,7 +69,7 @@ run_test_command "renamings" "tests/migration/validate-renamings.js"
 run_test_command "metadata" "tests/scripts/check_metadata.sh"
 
 # Run Mocha tests inside a browser.
-run_test_command "mocha" "node tests/mocha/run_mocha_tests_in_browser.js"
+run_test_command "mocha" "tests/scripts/run_browser_test.sh tests/mocha/run_mocha_tests_in_browser.js"
 
 # Run generator tests inside a browser and check the results.
 run_test_command "generators" "tests/scripts/run_generators.sh"
