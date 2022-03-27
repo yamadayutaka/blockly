@@ -103,7 +103,7 @@ has_failed=0
 compare_size() {
   local name="$1"
   local expected="$2"
-  local compare=$(echo "${expected} * 1.1 / 1" | bc)
+  local compare=$(awk "BEGIN {printf(\"%d\", ${expected} * 1.1)}")
 
   local size=$(wc -c <"${name}")
 

@@ -246,6 +246,35 @@ var JSCOMP_OFF = [
 ];
 
 /**
+ * Helper method for mapping root args used by depswriter.py.
+ */
+function mapRoot(closurePath, root) {
+  const rootRelative = path.posix.relative(closurePath, root);
+  if (rootRelative) {
+    return `--root_with_prefix="${root} ${rootRelative}" `;
+  } else {
+    return `--root=${root} `;
+  }
+}
+
+/**
+ * Helper method for make deps.js/deps.mocha.js file.
+ */
+function makeDeps(filePath, closurePath, roots, filterFunc = () => true) {
+  // TODO: Stop using depswriter.py if closure-make-deps is modified to work correctly on Windows.
+  // It is a workaround that uses depswriter.py.
+  const isWin = path.win32.sep === path.sep;
+  const [command, args] = isWin
+    ? [ 'python ./node_modules/google-closure-library/closure/bin/build/depswriter.py'
+        , roots.map(root => mapRoot(closurePath, root)).join('')]
+    : [ 'closure-make-deps'
+        , roots.map(root => `--root '${root}' `).join('')];
+  const buffer = execSync(`${command} ${args}`);
+  const lines = buffer.toString().split(/(?:\r\n|\r|\n)/g);
+  fs.writeFileSync(filePath, lines.filter(filterFunc).join('\n') + '\n');
+}
+
+/**
  * This task updates tests/deps.js, used by blockly_uncompressed.js
  * when loading Blockly in uncompiled mode.
  *
@@ -269,13 +298,10 @@ function buildDeps(done) {
     'tests/mocha'
   ];
 
-  const args = roots.map(root => `--root '${root}' `).join('');
-  execSync(`closure-make-deps ${args} > tests/deps.js`, {stdio: 'inherit'});
+  makeDeps('tests/deps.js', closurePath, roots);
 
   // Use grep to filter out the entries that are already in deps.js.
-  const testArgs = testRoots.map(root => `--root '${root}' `).join('');
-  execSync(`closure-make-deps ${testArgs} | grep 'tests/mocha'` +
-      ' > tests/deps.mocha.js', {stdio: 'inherit'});
+  makeDeps('tests/deps.mocha.js', closurePath, testRoots, (line) => line.indexOf('tests/mocha')>=0);
   done();
 };
 
@@ -443,7 +469,10 @@ function getChunkOptions() {
     // Replace absolute paths with relative ones, so they will be
     // valid on other machines.  Only needed because we're saving this
     // output to use later on another machine.
-    rawOptions.js = rawOptions.js.map(p => p.replace(process.cwd(), '.'));
+    // On Windows, Replace "\" with "/" (Replace OS-specific sep with POSIX style sep).
+    const osSpecificSep = new RegExp(path.sep.replace(/\\/g, '\\\\'), 'g');
+    rawOptions.js = rawOptions.js.map(p => p.replace(process.cwd(), '.')
+                                            .replace(osSpecificSep, path.posix.sep));
     fs.writeFileSync(CHUNK_CACHE_FILE,
                      JSON.stringify(rawOptions, null, 2) + '\n');
   } else {
