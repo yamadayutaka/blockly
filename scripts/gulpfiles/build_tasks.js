@@ -261,15 +261,8 @@ function mapRoot(closurePath, root) {
  * Helper method for make deps.js/deps.mocha.js file.
  */
 function makeDeps(filePath, closurePath, roots, filterFunc = () => true) {
-  // TODO: Stop using depswriter.py if closure-make-deps is modified to work correctly on Windows.
-  // It is a workaround that uses depswriter.py.
-  const isWin = path.win32.sep === path.sep;
-  const [command, args] = isWin
-    ? [ 'python ./node_modules/google-closure-library/closure/bin/build/depswriter.py'
-        , roots.map(root => mapRoot(closurePath, root)).join('')]
-    : [ 'closure-make-deps'
-        , roots.map(root => `--root '${root}' `).join('')];
-  const buffer = execSync(`${command} ${args}`);
+  const args = roots.map(root => `--root '${root}' `).join('');
+  const buffer = execSync(`closure-make-deps ${args}`);
   const lines = buffer.toString().split(/(?:\r\n|\r|\n)/g);
   fs.writeFileSync(filePath, lines.filter(filterFunc).join('\n') + '\n');
 }
