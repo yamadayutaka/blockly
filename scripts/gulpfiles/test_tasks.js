@@ -169,9 +169,12 @@ function mocha() {
 function compareFile(file1, file2) {
   const buf1 = fs.readFileSync(file1);
   const buf2 = fs.readFileSync(file2);
-  const result = (buf1.compare(buf2) === 0);
+  // Normalize the line feed.
+  const code1 = buf1.toString().replace(/(?:\r\n|\r|\n)/g, '\n');
+  const code2 = buf2.toString().replace(/(?:\r\n|\r|\n)/g, '\n');
+  const result = (code1 === code2);
   if (!result) {
-    console.log(buf1.toString());
+    console.log(code1);
   }
   return result;
 }
