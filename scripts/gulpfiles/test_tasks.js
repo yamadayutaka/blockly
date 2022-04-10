@@ -169,7 +169,11 @@ function mocha() {
 function compareFile(file1, file2) {
   const buf1 = fs.readFileSync(file1);
   const buf2 = fs.readFileSync(file2);
-  return (buf1.compare(buf2) === 0);
+  const result = (buf1.compare(buf2) === 0);
+  if (!result) {
+    console.log(buf1.toString());
+  }
+  return result;
 }
 
 /**
