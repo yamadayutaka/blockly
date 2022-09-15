@@ -337,6 +337,13 @@ function buildDeps(done) {
     'tests/mocha'
   ];
 
+  function filterOutputs(text, keyword) {
+    return text.split('\n')
+        .filter(
+          (line) => line.indexOf(keyword) >= 0)
+        .join('\n');
+  }
+
   function filterErrors(text) {
     return text.split('\n')
         .filter(
@@ -349,29 +356,30 @@ function buildDeps(done) {
   new Promise((resolve, reject) => {
     const args = roots.map(root => `--root '${root}' `).join('');
     exec(
-        `closure-make-deps ${args} >'${DEPS_FILE}'`,
+        `closure-make-deps ${args}`,
         {stdio: ['inherit', 'inherit', 'pipe']},
         (error, stdout, stderr) => {
           console.warn(filterErrors(stderr));
           if (error) {
             reject(error);
           } else {
+            fs.writeFileSync(DEPS_FILE, stdout);
             resolve();
           }
         });
   }).then(() => new Promise((resolve, reject) => {
-    // Use grep to filter out the entries that are already in deps.js.
+    // Filter out the entries that are already in deps.js.
     const testArgs =
         testRoots.map(root => `--root '${root}' `).join('');
     exec(
-        `closure-make-deps ${testArgs} 2>/dev/null\
-             | grep 'tests/mocha' > '${TEST_DEPS_FILE}'`,
+        `closure-make-deps ${testArgs}`,
         {stdio: ['inherit', 'inherit', 'pipe']},
         (error, stdout, stderr) => {
           console.warn(filterErrors(stderr));
           if (error) {
             reject(error);
           } else {
+            fs.writeFileSync(TEST_DEPS_FILE, filterOutputs(stdout, 'tests/mocha'));
             resolve();
           }
         });
@@ -508,6 +516,31 @@ return ${chunk.exports};
 }
 
 /**
+ * Escape regular expression pattern by making the following replacements:
+ *  * single backslash -> double backslash
+ * @param {string} pattern regular expression pattern
+ * @return {string} escaped regular expression pattern
+ */
+ function escapePattern(pattern) {
+  return pattern.replace(/\\/g, '\\\\');
+}
+
+/**
+ * Replaces OS-specific path with POSIX style path.
+ * @param {string} target target path
+ * @param {boolean} keepRoot keep original root path
+ * @return {string} normalized path
+ */
+ function normalizePath(target, keepRoot = false) {
+  const osSpecificSep = new RegExp(escapePattern(path.sep), 'g');
+  if (!keepRoot) {
+    const root = new RegExp(escapePattern(`^${path.resolve('/')}`));
+    target = target.replace(root, path.posix.sep);
+  }
+  return target.replace(osSpecificSep, path.posix.sep);
+}
+
+/**
  * Get chunking options to pass to Closure Compiler by using
  * closure-calculate-chunks (hereafter "ccc") to generate them based
  * on the deps.js file (which must be up to date!).
@@ -523,6 +556,8 @@ function getChunkOptions() {
   if (argv.compileTs) {
     chunks[0].entry = path.join(TSC_OUTPUT_DIR, chunks[0].entry);
   }
+  // Normalize chunk entry path.
+  chunks.forEach(chunk => chunk.entry = normalizePath(chunk.entry));
   const basePath =
       path.join(TSC_OUTPUT_DIR, 'closure', 'goog', 'base_minimal.js');
   const cccArgs = [
@@ -560,7 +595,8 @@ function getChunkOptions() {
   // chunk depends on any chunk but the first), so we look for
   // one of the entrypoints amongst the files in each chunk.
   const chunkByNickname = Object.create(null);
-  const jsFiles = rawOptions.js.slice();  // Will be modified via .splice!
+  // Normalize js files path.
+  const jsFiles = rawOptions.js.slice().map(p => normalizePath(p));  // Will be modified via .splice!
   const chunkList = rawOptions.chunk.map((element) => {
     const [nickname, numJsFiles, parentNick] = element.split(':');
 
