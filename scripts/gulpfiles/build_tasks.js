@@ -28,6 +28,8 @@ var rimraf = require('rimraf');
 var {BUILD_DIR, DEPS_FILE, TEST_DEPS_FILE, TSC_OUTPUT_DIR, TYPINGS_BUILD_DIR} = require('./config');
 var {getPackageJson} = require('./helper_tasks');
 
+var {normalizePath} = require('../build_helper');
+
 ////////////////////////////////////////////////////////////
 //                        Build                           //
 ////////////////////////////////////////////////////////////
@@ -513,31 +515,6 @@ ${chunk.exports}.${NAMESPACE_PROPERTY}=${NAMESPACE_VARIABLE};
 return ${chunk.exports};
 }));
 `;
-}
-
-/**
- * Escape regular expression pattern by making the following replacements:
- *  * single backslash -> double backslash
- * @param {string} pattern regular expression pattern
- * @return {string} escaped regular expression pattern
- */
- function escapePattern(pattern) {
-  return pattern.replace(/\\/g, '\\\\');
-}
-
-/**
- * Replaces OS-specific path with POSIX style path.
- * @param {string} target target path
- * @param {boolean} keepRoot keep original root path
- * @return {string} normalized path
- */
- function normalizePath(target, keepRoot = false) {
-  const osSpecificSep = new RegExp(escapePattern(path.sep), 'g');
-  if (!keepRoot) {
-    const root = new RegExp(escapePattern(`^${path.resolve('/')}`));
-    target = target.replace(root, path.posix.sep);
-  }
-  return target.replace(osSpecificSep, path.posix.sep);
 }
 
 /**

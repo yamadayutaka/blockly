@@ -17,6 +17,7 @@ const JsonSchema = require('@hyperjump/json-schema');
 const JSON5 = require('json5');
 const fs = require('fs');
 const path = require('path');
+const {normalizePath} = require('../../scripts/build_helper');
 
 
 /**
@@ -31,31 +32,6 @@ const SCHEMA_FILENAME = path.join(__dirname, 'renamings-schema.json');
  */
 const RENAMINGS_FILENAME =
     path.resolve(__dirname, '../../scripts/migration/renamings.json5');
-
-/**
- * Escape regular expression pattern by making the following replacements:
- *  * single backslash -> double backslash
- * @param {string} pattern regular expression pattern
- * @return {string} escaped regular expression pattern
- */
-function escapePattern(pattern) {
-  return pattern.replace(/\\/g, '\\\\');
-}
-
-/**
- * Replaces OS-specific path with POSIX style path.
- * @param {string} target target path
- * @param {boolean} keepRoot keep original root path
- * @return {string} normalized path
- */
-function normalizePath(target, keepRoot = false) {
-  const osSpecificSep = new RegExp(escapePattern(path.sep), 'g');
-  if (!keepRoot) {
-    const root = new RegExp(escapePattern(`^${path.resolve('/')}`));
-    target = target.replace(root, path.posix.sep);
-  }
-  return target.replace(osSpecificSep, path.posix.sep);
-}
 
 // Can't use top-level await outside a module, and can't use require
 // in a module, so use an IIAFE.
