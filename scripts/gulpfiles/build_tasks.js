@@ -534,7 +534,7 @@ function getChunkOptions() {
     chunks[0].entry = path.join(TSC_OUTPUT_DIR, chunks[0].entry);
   }
   // Normalize chunk entry path.
-  chunks.forEach(chunk => chunk.entry = normalizePath(chunk.entry));
+  chunks.forEach(chunk => chunk.entry = normalizePath(chunk.entry, true));
   const basePath =
       path.join(TSC_OUTPUT_DIR, 'closure', 'goog', 'base_minimal.js');
   const cccArgs = [

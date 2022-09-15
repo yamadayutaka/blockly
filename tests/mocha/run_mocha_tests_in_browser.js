@@ -45,7 +45,7 @@ async function runMochaTestsInBrowser() {
     };
   }
 
-  var url = 'file://' + normalizePath(__dirname) + '/index.html';
+  var url = 'file://' + normalizePath(__dirname, true) + '/index.html';
   console.log('Starting webdriverio...');
   const browser = await webdriverio.remote(options);
   console.log('Initialized.\nLoading url: ' + url);
