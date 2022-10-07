@@ -17,7 +17,7 @@ const path = require('path');
  * @return {string} escaped regular expression pattern
  */
 function escapeRegex(pattern) {
-  return pattern.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  return pattern.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
 /**
