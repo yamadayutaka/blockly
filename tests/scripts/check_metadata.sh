@@ -83,7 +83,7 @@ readonly BLOCKLY_GZ_SIZE_EXPECTED=185766
 # Q4 2021	7.20211209.0	15760
 # Q2 2022	8.0.0	   16192
 # Q3 2022	8.0.0	17016 (mid-quarter typescript conversion)
-readonly BLOCKS_GZ_SIZE_EXPECTED=17016
+readonly BLOCKS_GZ_SIZE_EXPECTED=15016
 
 # ANSI colors
 readonly BOLD_GREEN='\033[1;32m'
